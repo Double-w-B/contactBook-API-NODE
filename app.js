@@ -13,21 +13,20 @@ const authRouter = require("./routes/authRoutes");
 const userRouter = require("./routes/userRoutes");
 const contactsRouter = require("./routes/contactsRoutes");
 
+// authentication
+const { authenticateUser } = require("./middleware/authentication");
+
 // middleware
 const notFoundMiddleware = require("./middleware/notFound");
 const errorHandlerMiddleware = require("./middleware/errorHandler");
-
-app.get("/", (req, res) => {
-  res.send("Contact book API");
-});
 
 app.use(express.json());
 app.use(cookieParser(process.env.JWT_SECRET));
 app.use(cors());
 
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/user", userRouter);
-app.use("/api/v1/contacts", contactsRouter);
+app.use("/api/v1/user", authenticateUser, userRouter);
+app.use("/api/v1/contacts", authenticateUser, contactsRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
