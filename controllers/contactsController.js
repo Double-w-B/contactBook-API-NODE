@@ -1,6 +1,11 @@
+const path = require("path");
 const Contact = require("../models/Contact");
 const CustomError = require("../customErrors");
 const { StatusCodes } = require("http-status-codes");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
+let contactImageUrl = "";
+let contactImageName = "";
 
 // ! getAllContacts
 const getAllContacts = async (req, res) => {
@@ -20,7 +25,7 @@ const getContact = async (req, res) => {
 //! addContact
 const addContact = async (req, res) => {
   const {
-    body: { phone },
+    body: { phone, img },
     user: { userId },
   } = req;
 
@@ -32,7 +37,14 @@ const addContact = async (req, res) => {
   if (contactAlreadyExists) {
     throw new CustomError.BadRequestError("Contact already exists");
   }
+  if (contactImageUrl) {
+    img.src = contactImageUrl;
+    img.name = contactImageName;
+  }
   const contact = await Contact.create({ ...req.body, createdBy: userId });
+
+  contactImageUrl = "";
+  contactImageName = "";
 
   res.status(StatusCodes.CREATED).json({ contact });
 };
@@ -88,10 +100,42 @@ const deleteContact = async (req, res) => {
 };
 //! deleteContact
 
+//! deleteManyContacts
+const deleteManyContacts = async (req, res) => {
+  const {
+    user: { userId },
+    body: { contactsId },
+  } = req;
+
+  for (const singleId of contactsId) {
+    await Contact.findByIdAndRemove({ _id: singleId, createdBy: userId });
+  }
+
+  res.status(StatusCodes.OK).json({ msg: "Success! Contacts removed!" });
+};
+//! deleteManyContacts
+
+//! uploadContactImage
+const uploadContactImage = async (req, res) => {
+  const result = await cloudinary.uploader.upload(
+    req.files.image.tempFilePath,
+    { use_filename: true, folder: "contactBook-js" }
+  );
+
+  fs.unlinkSync(req.files.image.tempFilePath);
+  contactImageUrl = result.secure_url;
+  contactImageName = req.files.image.name;
+
+  res.status(StatusCodes.OK).json({ msg: "Image added successfully!" });
+};
+//! uploadContactImage
+
 module.exports = {
   getAllContacts,
   getContact,
   addContact,
   updateContact,
   deleteContact,
+  deleteManyContacts,
+  uploadContactImage,
 };

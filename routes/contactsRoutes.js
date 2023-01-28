@@ -7,10 +7,16 @@ const {
   addContact,
   updateContact,
   deleteContact,
+  deleteManyContacts,
+  uploadContactImage,
 } = require("../controllers/contactsController");
 
-
-router.route("/").get(getAllContacts).post(addContact);
+router.route("/uploadImage").post(uploadContactImage);
+router
+  .route("/")
+  .get(getAllContacts)
+  .post(addContact)
+  .delete(deleteManyContacts);
 router.route("/:id").get(getContact).patch(updateContact).delete(deleteContact);
 
 module.exports = router;

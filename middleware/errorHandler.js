@@ -8,10 +8,7 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   };
 
   if (err.name === "ValidationError") {
-    const msg = Object.values(err.errors)
-      .map((item) => item.message)
-      .join(", ");
-    customError.msg = `Please, provide ${msg}.`;
+    customError.msg = `Please, provide values.`;
     customError.statusCode = 400;
   }
 
