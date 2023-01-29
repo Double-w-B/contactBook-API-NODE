@@ -6,6 +6,7 @@ const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 let contactImageUrl = "";
 let contactImageName = "";
+let contactImageId = "";
 
 // ! getAllContacts
 const getAllContacts = async (req, res) => {
@@ -53,7 +54,7 @@ const addContact = async (req, res) => {
 //! updateContact
 const updateContact = async (req, res) => {
   const {
-    body: { name, surname, phone },
+    body: { name, surname, phone, img },
     user: { userId },
     params: { id: contactId },
   } = req;
@@ -64,6 +65,11 @@ const updateContact = async (req, res) => {
     );
   }
 
+  if (contactImageUrl) {
+    img.src = contactImageUrl;
+    img.name = contactImageName;
+  }
+
   const contact = await Contact.findOneAndUpdate(
     { _id: contactId, createdBy: userId },
     req.body,
@@ -71,6 +77,9 @@ const updateContact = async (req, res) => {
       new: true,
     }
   );
+
+  contactImageUrl = "";
+  contactImageName = "";
 
   if (!contact) {
     throw new CustomError.NotFoundError(`No contact with id ${contactId}`);
@@ -125,10 +134,60 @@ const uploadContactImage = async (req, res) => {
   fs.unlinkSync(req.files.image.tempFilePath);
   contactImageUrl = result.secure_url;
   contactImageName = req.files.image.name;
+  contactImageId = result.public_id;
 
-  res.status(StatusCodes.OK).json({ msg: "Image added successfully!" });
+  res.status(StatusCodes.OK).json({ msg: contactImageId });
 };
 //! uploadContactImage
+
+//! removeContactImageFromDB
+const removeContactImage = async (req, res) => {
+  const {
+    body: { cloudinaryImgId, contactId },
+    user: { userId },
+  } = req;
+
+  if (contactId) {
+    await Contact.findOneAndUpdate(
+      { _id: contactId, createdBy: userId },
+      { img: { src: "", name: "" } },
+      {
+        new: true,
+      }
+    );
+  }
+  let resultMsg = "";
+
+  contactImageUrl = "";
+  contactImageName = "";
+
+  await cloudinary.uploader
+    .destroy(cloudinaryImgId)
+    .then(({ result }) => (resultMsg = result));
+
+  res.status(StatusCodes.OK).json({ msg: resultMsg });
+};
+//! removeContactImageFromDB
+
+//!removeUnsavedImageFromDB
+const removeUnsavedImageFromDB = async (req, res) => {
+  if (!contactImageUrl || !contactImageId) {
+    throw new CustomError.BadRequestError("Image wasn't added");
+  }
+
+  let resultMsg = "";
+
+  await cloudinary.uploader
+    .destroy(contactImageId)
+    .then(({ result }) => (resultMsg = result));
+
+  contactImageUrl = "";
+  contactImageName = "";
+  contactImageId = "";
+
+  res.status(StatusCodes.OK).json({ msg: resultMsg });
+};
+//!removeUnsavedImageFromDB
 
 module.exports = {
   getAllContacts,
@@ -138,4 +197,6 @@ module.exports = {
   deleteContact,
   deleteManyContacts,
   uploadContactImage,
+  removeContactImage,
+  removeUnsavedImageFromDB,
 };

@@ -9,9 +9,13 @@ const {
   deleteContact,
   deleteManyContacts,
   uploadContactImage,
+  removeContactImage,
+  removeUnsavedImageFromDB
 } = require("../controllers/contactsController");
 
 router.route("/uploadImage").post(uploadContactImage);
+router.route("/removeImage").post(removeContactImage);
+router.route("/removeUnsavedImage").get(removeUnsavedImageFromDB);
 router
   .route("/")
   .get(getAllContacts)
