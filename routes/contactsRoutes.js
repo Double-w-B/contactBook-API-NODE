@@ -3,14 +3,13 @@ const router = express.Router();
 
 const {
   getAllContacts,
-  getContact,
   addContact,
   updateContact,
   deleteContact,
   deleteManyContacts,
   uploadContactImage,
   removeContactImage,
-  removeUnsavedImageFromDB
+  removeUnsavedImageFromDB,
 } = require("../controllers/contactsController");
 
 router.route("/uploadImage").post(uploadContactImage);
@@ -21,6 +20,6 @@ router
   .get(getAllContacts)
   .post(addContact)
   .delete(deleteManyContacts);
-router.route("/:id").get(getContact).patch(updateContact).delete(deleteContact);
+router.route("/:id").patch(updateContact).delete(deleteContact);
 
 module.exports = router;

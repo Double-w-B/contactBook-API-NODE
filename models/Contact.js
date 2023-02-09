@@ -37,6 +37,7 @@ const ContactSchema = new mongoose.Schema(
     img: {
       src: { type: String, default: "" },
       name: { type: String, default: "" },
+      id: { type: String, default: "" },
     },
     createdBy: {
       type: mongoose.Types.ObjectId,
