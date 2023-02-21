@@ -1,7 +1,9 @@
 const User = require("../models/User");
+const Contact = require("../models/Contact");
 const CustomError = require("../customErrors");
 const { StatusCodes } = require("http-status-codes");
 const { attachCookiesToResponse } = require("../utils");
+const cloudinary = require("cloudinary").v2;
 
 //! checkUser
 const checkUser = async (req, res) => {
@@ -81,21 +83,31 @@ const updatePassword = async (req, res) => {
 //! deleteUser
 const deleteUser = async (req, res) => {
   const { password } = req.body;
+  const { userId } = req.user;
 
   if (!password) {
     throw new CustomError.BadRequestError("Please provide password");
   }
 
-  const user = await User.findOne({ _id: req.user.userId });
+  const user = await User.findOne({ _id: userId });
+  const allContacts = await Contact.find({ createdBy: userId });
+
   const isPasswordCorrect = await user.comparePasswords(password);
 
   if (!isPasswordCorrect) {
     throw new CustomError.UnauthenticatedError("Invalid credentials");
   }
 
-  await user.remove()
+  for (const singleContact of allContacts) {
+    if (singleContact.img.id) {
+      await cloudinary.uploader.destroy(singleContact.img.id);
+    }
+    await singleContact.remove();
+  }
 
-  res.status(StatusCodes.OK).json({ msg: "User and user's data removed." });
+  await user.remove();
+
+  res.status(StatusCodes.OK).json({ msg: "User and user's data removed" });
 };
 //! deleteUser
 

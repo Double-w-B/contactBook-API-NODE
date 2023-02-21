@@ -32,10 +32,6 @@ UserSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-UserSchema.pre("remove", async function () {
-  await this.model("Contact").deleteMany({ createdBy: this._id });
-});
-
 UserSchema.methods.comparePasswords = async function (candidatePassword) {
   const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
